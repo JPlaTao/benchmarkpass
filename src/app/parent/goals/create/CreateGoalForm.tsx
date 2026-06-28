@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles, Star, Target } from "lucide-react";
+import { CATEGORIES } from "@/lib/templates/template-library";
 
 export default function CreateGoalForm({
   familyId,
@@ -153,13 +154,11 @@ export default function CreateGoalForm({
           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         >
           <option value="">选择分类（可选）</option>
-          <option value="STUDY">学习</option>
-          <option value="CHORE">家务</option>
-          <option value="HEALTH">健康</option>
-          <option value="SOCIAL">社交</option>
-          <option value="READING">阅读</option>
-          <option value="HABIT">习惯</option>
-          <option value="CUSTOM">自定义</option>
+          {CATEGORIES.map((cat) => (
+            <option key={cat.key} value={cat.key}>
+              {cat.label}
+            </option>
+          ))}
         </select>
       </div>
 
