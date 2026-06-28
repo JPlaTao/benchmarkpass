@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  PARENT
+  CHILD
+}
+
+enum GoalDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum GoalRecurrence {
+  DAILY
+  WEEKLY
+  ONCE
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+enum VerificationType {
+  PARENT_APPROVE
+  PHOTO
+}
+
+enum CompletionStatus {
+  PENDING_VERIFY
+  VERIFIED
+  REJECTED
+}
+
+enum TransactionType {
+  XP
+  COIN
+}
+
+enum RewardType {
+  REAL_WORLD
+  SCREEN_TIME
+  OUTING
+  CUSTOM
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  TRIAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  password  String?
+  loginCode String?  @unique
+  role      UserRole
+  image     String?
+  age       Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  familyId String?
+  family   Family? @relation("FamilyMembers", fields: [familyId], references: [id], map: "fk_user_family")
+  parentId String?
+  parent   User?   @relation("ParentChild", fields: [parentId], references: [id], map: "fk_user_parent")
+  children User[]  @relation("ParentChild")
+  seasonId String?
+  season   Season? @relation("AssignedSeason", fields: [seasonId], references: [id], map: "fk_user_season")
+
+  createdGoals  Goal[]           @relation("GoalCreator")
+  assignedGoals Goal[]           @relation("GoalAssignee")
+  completions   GoalCompletion[] @relation("CompleterChild")
+  transactions  Transaction[]
+  redemptions   Redemption[]
+  levelClaims   LevelClaim[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_account_user")
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_session_user")
+}
+
+model Family {
+  id                   String             @id @default(cuid())
+  name                 String?
+  subscriptionStatus   SubscriptionStatus @default(TRIAL)
+  subscriptionPlan     SubscriptionPlan?
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  members User[]   @relation("FamilyMembers")
+  goals   Goal[]
+  seasons Season[]
+  rewards Reward[]
+}
+
+model Season {
+  id        String   @id @default(cuid())
+  familyId  String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  family  Family  @relation(fields: [familyId], references: [id], onDelete: Cascade, map: "fk_season_family")
+  levels  Level[]
+  members User[]  @relation("AssignedSeason")
+}
+
+model Level {
+  id          String     @id @default(cuid())
+  seasonId    String
+  levelNum    Int
+  xpRequired  Int
+  rewardTitle String?
+  rewardDesc  String?
+  rewardType  RewardType @default(CUSTOM)
+  isPremium   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  season Season       @relation(fields: [seasonId], references: [id], onDelete: Cascade, map: "fk_level_season")
+  claims LevelClaim[]
+}
+
+model Goal {
+  id               String           @id @default(cuid())
+  familyId         String
+  createdById      String
+  assignedToId     String?
+  title            String
+  description      String?          @db.Text
+  difficulty       GoalDifficulty   @default(MEDIUM)
+  xpReward         Int              @default(10)
+  coinReward       Int              @default(0)
+  category         String?
+  recurrence       GoalRecurrence   @default(ONCE)
+  verificationType VerificationType @default(PARENT_APPROVE)
+  status           GoalStatus       @default(ACTIVE)
+  dueDate          DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  family      Family           @relation(fields: [familyId], references: [id], onDelete: Cascade, map: "fk_goal_family")
+  createdBy   User             @relation("GoalCreator", fields: [createdById], references: [id], map: "fk_goal_creator")
+  assignedTo  User?            @relation("GoalAssignee", fields: [assignedToId], references: [id], map: "fk_goal_assignee")
+  completions GoalCompletion[]
+}
+
+model GoalCompletion {
+  id         String           @id @default(cuid())
+  goalId     String
+  childId    String
+  date       DateTime         @default(now())
+  note       String?          @db.Text
+  imageUrl   String?
+  status     CompletionStatus @default(PENDING_VERIFY)
+  verifiedAt DateTime?
+  verifiedBy String?
+  createdAt  DateTime         @default(now())
+
+  goal  Goal @relation(fields: [goalId], references: [id], onDelete: Cascade, map: "fk_completion_goal")
+  child User @relation("CompleterChild", fields: [childId], references: [id], map: "fk_completion_child")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  childId     String
+  type        TransactionType
+  amount      Int
+  balance     Int
+  reason      String          @db.Text
+  referenceId String?
+  createdAt   DateTime        @default(now())
+
+  child User @relation(fields: [childId], references: [id], map: "fk_transaction_child")
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  familyId    String
+  title       String
+  description String?  @db.Text
+  coinCost    Int
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  family      Family       @relation(fields: [familyId], references: [id], onDelete: Cascade, map: "fk_reward_family")
+  redemptions Redemption[]
+}
+
+model LevelClaim {
+  id        String   @id @default(cuid())
+  childId   String
+  levelId   String
+  createdAt DateTime @default(now())
+
+  child User  @relation(fields: [childId], references: [id], map: "fk_level_claim_child")
+  level Level @relation(fields: [levelId], references: [id], map: "fk_level_claim_level")
+
+  @@unique([childId, levelId])
+}
+
+model Redemption {
+  id          String           @id @default(cuid())
+  childId     String
+  rewardId    String
+  status      CompletionStatus @default(PENDING_VERIFY)
+  fulfilledAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  child  User   @relation(fields: [childId], references: [id], map: "fk_redemption_child")
+  reward Reward @relation(fields: [rewardId], references: [id], map: "fk_redemption_reward")
+}
