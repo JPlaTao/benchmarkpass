@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PlusCircle, Target } from "lucide-react";
+import DeleteGoalButton from "./delete-button";
 
 export default async function GoalsPage() {
   const session = await auth();
@@ -51,6 +52,15 @@ export default async function GoalsPage() {
                       <span>+{goal.xpReward} XP</span>
                       <span className="capitalize">{goal.recurrence.toLowerCase()}</span>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Link
+                      href={`/parent/goals/edit/${goal.id}`}
+                      className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      编辑
+                    </Link>
+                    <DeleteGoalButton goalId={goal.id} />
                   </div>
                 </div>
               </div>

@@ -5,21 +5,36 @@ import { useRouter } from "next/navigation";
 import { Loader2, Sparkles, Star, Target } from "lucide-react";
 import { CATEGORIES } from "@/lib/templates/template-library";
 
+interface CreateGoalFormProps {
+  familyId: string;
+  parentId: string;
+  initialGoal?: {
+    id: string;
+    title: string;
+    description: string | null;
+    xpReward: number;
+    coinReward: number;
+    recurrence: string;
+    category: string | null;
+    assignedToId: string | null;
+  };
+}
+
 export default function CreateGoalForm({
   familyId,
   parentId,
-}: {
-  familyId: string;
-  parentId: string;
-}) {
+  initialGoal,
+}: CreateGoalFormProps) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [xpReward, setXpReward] = useState(10);
-  const [coinReward, setCoinReward] = useState(0);
-  const [recurrence, setRecurrence] = useState<"DAILY" | "WEEKLY" | "ONCE">("ONCE");
-  const [category, setCategory] = useState("");
-  const [childId, setChildId] = useState("");
+  const [title, setTitle] = useState(initialGoal?.title || "");
+  const [description, setDescription] = useState(initialGoal?.description || "");
+  const [xpReward, setXpReward] = useState(initialGoal?.xpReward ?? 10);
+  const [coinReward, setCoinReward] = useState(initialGoal?.coinReward ?? 0);
+  const [recurrence, setRecurrence] = useState<"DAILY" | "WEEKLY" | "ONCE">(
+    (initialGoal?.recurrence as "DAILY" | "WEEKLY" | "ONCE") || "ONCE"
+  );
+  const [category, setCategory] = useState(initialGoal?.category || "");
+  const [childId, setChildId] = useState(initialGoal?.assignedToId || "");
   const [children, setChildren] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,8 +77,13 @@ export default function CreateGoalForm({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/goals", {
-        method: "POST",
+      const url = initialGoal
+        ? `/api/goals/${initialGoal.id}`
+        : "/api/goals";
+      const method = initialGoal ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           familyId,
@@ -80,14 +100,14 @@ export default function CreateGoalForm({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "创建失败");
+        setError(data.error || (initialGoal ? "更新失败" : "创建失败"));
         setLoading(false);
         return;
       }
 
       router.push("/parent/goals");
     } catch {
-      setError("创建失败，请重试");
+      setError(initialGoal ? "更新失败" : "创建失败");
       setLoading(false);
     }
   }
@@ -229,7 +249,7 @@ export default function CreateGoalForm({
         disabled={loading}
         className="w-full py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
       >
-        {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> 创建中...</> : <><Target className="w-4 h-4" /> 创建目标</>}
+        {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {initialGoal ? "保存中..." : "创建中..."}</> : <><Target className="w-4 h-4" /> {initialGoal ? "保存修改" : "创建目标"}</>}
       </button>
     </form>
   );
