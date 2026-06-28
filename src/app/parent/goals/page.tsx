@@ -3,19 +3,41 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PlusCircle, Target } from "lucide-react";
+import GoalFilters from "./goal-filters";
 import DeleteGoalButton from "./delete-button";
 
-export default async function GoalsPage() {
+export default async function GoalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; childId?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/auth/login");
   if ((session.user as any).role !== "PARENT") redirect("/child/dashboard");
 
+  const params = await searchParams;
   const user = session.user as any;
 
+  // Build where clause
+  const where: Record<string, unknown> = { familyId: user.familyId };
+  if (params.status) {
+    where.status = params.status;
+  }
+  if (params.childId) {
+    where.assignedToId = params.childId;
+  }
+
   const goals = await prisma.goal.findMany({
-    where: { familyId: user.familyId },
+    where,
     include: { assignedTo: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
+  });
+
+  // Get children for filter dropdown
+  const children = await prisma.user.findMany({
+    where: { familyId: user.familyId, role: "CHILD" },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "asc" },
   });
 
   return (
@@ -37,13 +59,29 @@ export default async function GoalsPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-6">
+        <GoalFilters
+          status={params.status || ""}
+          childId={params.childId || ""}
+          children={children}
+        />
+
         {goals.length > 0 ? (
           <div className="space-y-3">
             {goals.map((goal) => (
               <div key={goal.id} className="bg-card rounded-xl p-4 border border-border">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-medium">{goal.title}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium">{goal.title}</div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        goal.status === "ACTIVE" ? "bg-success/10 text-success" :
+                        goal.status === "COMPLETED" ? "bg-primary/10 text-primary" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {goal.status === "ACTIVE" ? "进行中" :
+                         goal.status === "COMPLETED" ? "已完成" : "已过期"}
+                      </span>
+                    </div>
                     {goal.description && (
                       <div className="text-sm text-muted-foreground">{goal.description}</div>
                     )}
