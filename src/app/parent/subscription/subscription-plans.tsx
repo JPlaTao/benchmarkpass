@@ -59,6 +59,7 @@ export default function SubscriptionPlans({
 }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const isSubscribed = currentStatus === "ACTIVE" || currentStatus === "TRIAL";
 
@@ -76,7 +77,7 @@ export default function SubscriptionPlans({
         window.location.href = data.url;
       }
     } catch {
-      // silent
+      setError("订阅失败，请重试");
     }
     setLoading(null);
   }
@@ -93,13 +94,16 @@ export default function SubscriptionPlans({
         window.location.href = data.url;
       }
     } catch {
-      // silent
+      setError("操作失败，请重试");
     }
     setPortalLoading(false);
   }
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="text-sm text-danger bg-danger/5 px-4 py-2 rounded-lg">{error}</div>
+      )}
       {/* Current Status */}
       <div className="bg-card rounded-2xl p-6 border border-border">
         <div className="flex items-center justify-between mb-4">

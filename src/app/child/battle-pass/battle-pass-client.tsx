@@ -20,9 +20,11 @@ export default function BattlePassClient({ levels }: { levels: LevelData[] }) {
     new Set(levels.filter((l) => l.claimed).map((l) => l.id))
   );
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function handleClaim(levelId: string) {
     setClaimingId(levelId);
+    setError("");
     try {
       const res = await fetch("/api/seasons/claim", {
         method: "POST",
@@ -34,7 +36,7 @@ export default function BattlePassClient({ levels }: { levels: LevelData[] }) {
         setClaimedIds((prev) => new Set(prev).add(levelId));
       }
     } catch {
-      // silent
+      setError("领取失败，请重试");
     }
     setClaimingId(null);
   }
@@ -45,6 +47,9 @@ export default function BattlePassClient({ levels }: { levels: LevelData[] }) {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="text-sm text-danger bg-danger/5 px-4 py-2 rounded-lg">{error}</div>
+      )}
       {/* Free Track */}
       <div>
         <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">

@@ -24,9 +24,11 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(completedToday);
+  const [error, setError] = useState("");
 
   async function handleComplete() {
     setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/goals/complete", {
         method: "POST",
@@ -44,7 +46,7 @@ export default function TaskCard({
         }
       }
     } catch {
-      // silent fail
+      setError("提交失败，请重试");
     }
     setLoading(false);
   }
@@ -102,6 +104,9 @@ export default function TaskCard({
         </div>
       </div>
 
+      {error && (
+        <div className="text-xs text-danger bg-danger/5 px-3 py-2 rounded-lg mb-2">{error}</div>
+      )}
       {submitted && (
         <div className="mt-2 ml-8 flex items-center gap-1.5 text-xs text-success">
           <Sparkles className="w-3 h-3" />

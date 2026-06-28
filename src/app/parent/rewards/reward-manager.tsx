@@ -37,6 +37,7 @@ export default function RewardManager({
   const [coinCost, setCoinCost] = useState(10);
   const [loading, setLoading] = useState(false);
   const [fulfillingId, setFulfillingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -58,7 +59,7 @@ export default function RewardManager({
         setCoinCost(10);
       }
     } catch {
-      // silent
+      setError("创建失败，请重试");
     }
     setLoading(false);
   }
@@ -76,13 +77,16 @@ export default function RewardManager({
         setRedemptions((prev) => prev.filter((r) => r.id !== redemptionId));
       }
     } catch {
-      // silent
+      setError("操作失败，请重试");
     }
     setFulfillingId(null);
   }
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="text-sm text-danger bg-danger/5 px-4 py-2 rounded-lg">{error}</div>
+      )}
       {/* Pending Redemptions */}
       {redemptions.length > 0 && (
         <section>

@@ -14,6 +14,7 @@ export default function ReviewList() {
   const [items, setItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/goals/pending")
@@ -22,7 +23,10 @@ export default function ReviewList() {
         setItems(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setError("加载失败，请刷新重试");
+        setLoading(false);
+      });
   }, []);
 
   async function handleVerify(completionId: string, status: "VERIFIED" | "REJECTED") {
@@ -38,7 +42,7 @@ export default function ReviewList() {
         setItems((prev) => prev.filter((item) => item.id !== completionId));
       }
     } catch {
-      // silent
+      setError("操作失败，请重试");
     }
     setActionLoading(null);
   }
@@ -63,6 +67,9 @@ export default function ReviewList() {
 
   return (
     <div className="space-y-3">
+      {error && (
+        <div className="text-sm text-danger bg-danger/5 px-3 py-2 rounded-lg">{error}</div>
+      )}
       <p className="text-sm text-muted-foreground mb-2">
         共 {items.length} 项待审核
       </p>
