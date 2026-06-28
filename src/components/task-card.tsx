@@ -41,7 +41,7 @@ export default function TaskCard({
         onComplete();
       } else {
         const data = await res.json();
-        if (data.error === "今天已经提交过了") {
+        if (data.error === "今天已经提交过了" || data.error === "本周已经提交过了") {
           setSubmitted(true);
         }
       }

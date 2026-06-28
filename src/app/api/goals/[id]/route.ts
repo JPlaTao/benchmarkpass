@@ -43,6 +43,26 @@ export async function PATCH(
       return NextResponse.json({ error: "没有要更新的字段" }, { status: 400 });
     }
 
+    const VALID_RECURRENCE = ["DAILY", "WEEKLY", "ONCE"];
+    const VALID_STATUS = ["ACTIVE", "COMPLETED", "EXPIRED"];
+
+    if (body.recurrence && !VALID_RECURRENCE.includes(body.recurrence)) {
+      return NextResponse.json({ error: "无效的重复类型" }, { status: 400 });
+    }
+    if (body.status && !VALID_STATUS.includes(body.status)) {
+      return NextResponse.json({ error: "无效的状态" }, { status: 400 });
+    }
+
+    if (body.assignedToId !== undefined && body.assignedToId !== null) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: body.assignedToId },
+        select: { familyId: true },
+      });
+      if (!assignee || assignee.familyId !== user.familyId) {
+        return NextResponse.json({ error: "指定的孩子不存在" }, { status: 400 });
+      }
+    }
+
     const updated = await prisma.goal.update({
       where: { id },
       data: updateData,

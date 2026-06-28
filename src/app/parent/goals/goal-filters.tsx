@@ -28,7 +28,7 @@ export default function GoalFilters({
   return (
     <div className="flex gap-3 mb-4">
       <select
-        defaultValue={status}
+        value={status}
         onChange={(e) => updateFilter("status", e.target.value)}
         className="px-3 py-2 rounded-lg border border-border bg-background text-sm"
       >
@@ -38,7 +38,7 @@ export default function GoalFilters({
         <option value="EXPIRED">已过期</option>
       </select>
       <select
-        defaultValue={childId}
+        value={childId}
         onChange={(e) => updateFilter("childId", e.target.value)}
         className="px-3 py-2 rounded-lg border border-border bg-background text-sm"
       >
