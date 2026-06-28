@@ -192,6 +192,10 @@ model Goal {
   createdBy   User             @relation("GoalCreator", fields: [createdById], references: [id], map: "fk_goal_creator")
   assignedTo  User?            @relation("GoalAssignee", fields: [assignedToId], references: [id], map: "fk_goal_assignee")
   completions GoalCompletion[]
+
+  @@index([familyId])
+  @@index([assignedToId])
+  @@index([status])
 }
 
 model GoalCompletion {
@@ -208,6 +212,10 @@ model GoalCompletion {
 
   goal  Goal @relation(fields: [goalId], references: [id], onDelete: Cascade, map: "fk_completion_goal")
   child User @relation("CompleterChild", fields: [childId], references: [id], map: "fk_completion_child")
+
+  @@index([goalId])
+  @@index([childId])
+  @@index([date])
 }
 
 model Transaction {
@@ -221,6 +229,9 @@ model Transaction {
   createdAt   DateTime        @default(now())
 
   child User @relation(fields: [childId], references: [id], map: "fk_transaction_child")
+
+  @@index([childId])
+  @@index([type])
 }
 
 model Reward {
