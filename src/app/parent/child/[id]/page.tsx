@@ -22,20 +22,28 @@ export default async function ChildDetailPage({
         where: { status: "ACTIVE" },
         include: { completions: true },
       },
-      transactions: {
-        orderBy: { createdAt: "desc" },
-        take: 2,
-      },
       family: true,
     },
   });
 
+  // Fetch balances separately
+  const [xpTx, coinTx] = await Promise.all([
+    prisma.transaction.findFirst({
+      where: { childId: id, type: "XP" },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.transaction.findFirst({
+      where: { childId: id, type: "COIN" },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const xpBalance = xpTx?.balance ?? 0;
+  const coinBalance = coinTx?.balance ?? 0;
+
   if (!child || child.familyId !== (session.user as any).familyId) {
     redirect("/parent/dashboard");
   }
-
-  const xpBalance = child.transactions.find((t) => t.type === "XP")?.balance ?? 0;
-  const coinBalance = child.transactions.find((t) => t.type === "COIN")?.balance ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
