@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BenchmarkPass 🏆
 
-## Getting Started
+让孩子在游戏化的挑战中养成好习惯。
 
-First, run the development server:
+家长设定目标 → 孩子完成任务赚 XP 升级 → 家长审核通过 → 孩子兑换奖励。
+
+## 技术栈
+
+- **框架:** Next.js 16 (App Router)
+- **语言:** TypeScript
+- **样式:** Tailwind CSS v4
+- **数据库:** MySQL / MariaDB (Prisma 7)
+- **认证:** NextAuth v5 (Credentials JWT)
+- **支付:** Stripe（可选）
+- **AI:** 通义千问 DashScope（可选）
+
+## 前置依赖
+
+- Node.js 20+
+- pnpm
+- MySQL 8.0+
+
+## 快速开始
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. 克隆仓库
+git clone <repo-url> && cd benchmarkpass
+
+# 2. 安装依赖（自动生成 Prisma Client）
+pnpm install
+
+# 3. 配置环境变量
+cp .env.example .env
+# 编辑 .env，填入你的 MySQL 连接信息
+
+# 4. 创建数据库并执行迁移
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS benchmarkpass"
+pnpm prisma migrate dev
+
+# 5. 启动开发服务器
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 http://localhost:3000 即可使用。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 使用流程
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **家长注册** — 用邮箱注册账号，自动创建家庭
+2. **添加孩子** — 获得孩子的登录码（例如 BP3X7K42）
+3. **创建目标** — 从模板库选或自定义，设定 XP/币奖励
+4. **孩子登录** — 用登录码 + 默认密码 123456 进入任务看板
+5. **完成任务** — 孩子点击勾选提交，等待家长审核
+6. **家长审核** — 确认完成后 XP 和币自动到账
 
-## Learn More
+## 环境变量
 
-To learn more about Next.js, take a look at the following resources:
+参见 `.env.example`。Stripe 和 DashScope 为可选配置，不配不影响核心功能。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 项目结构
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/
+│   ├── api/          # API 路由（认证、目标、奖励、赛季、Stripe）
+│   ├── auth/         # 登录/注册页面
+│   ├── parent/       # 家长管理端
+│   ├── child/        # 孩子操作端
+│   └── page.tsx      # 首页着陆页
+├── components/       # 共享组件
+├── lib/              # 工具函数、认证配置、模板库
+└── generated/prisma/ # Prisma Client（自动生成）
+```
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
