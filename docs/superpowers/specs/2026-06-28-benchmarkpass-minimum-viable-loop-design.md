@@ -161,3 +161,33 @@ Add `"postinstall": "prisma generate"` to `package.json` so new clones don't nee
 | Toast library or inline? | Inline error/success state (no new dependency) |
 | Hard or soft delete? | Hard delete with cascade |
 | Add seed script? | Not now — README steps suffice |
+
+## 实现记录
+
+### 2026-06-28
+
+**任务 1: 数据库索引** — 为 Goal、GoalCompletion、Transaction 模型添加 `@@index` 共 7 个索引。Prisma generate + tsc 通过。
+
+**任务 2: 孩子余额查询修复** — `parent/child/[id]/page.tsx` 将单次 `take: 2` 查询替换为两次独立的 `findFirst`（XP 和 COIN 分别取最后一条）。tsc 通过。
+
+**任务 3: 周目标去重修复** — `goals/complete/route.ts` 添加 `getDedupStartDate()` 函数，WEEKLY 按本周一 00:00 去重，DAILY/ONCE 保持不变。tsc 通过。
+
+**任务 4: 共享分类常量** — `CreateGoalForm.tsx` 从 `template-library.ts` 引入 `CATEGORIES`，补全 SKILL/OUTDOOR/READING 分类。
+
+**任务 5: 目标编辑/删除 API** — 创建 `src/app/api/goals/[id]/route.ts`，实现 PATCH（白名单字段更新）和 DELETE（硬删除，含家庭范围检查）。
+
+**任务 6: 目标编辑 UI** — 修改 `CreateGoalForm.tsx` 支持可选的 `initialGoal` 编辑模式。创建编辑页 `edit/[id]/page.tsx`。创建 `delete-button.tsx` 客户端删除组件。目标列表页添加编辑和删除按钮。
+
+**任务 7: 目标列表筛选** — 创建 `GoalFilters` 客户端过滤组件（状态 + 孩子分配），后端 Prisma where 条件动态构建。状态标签补全。
+
+**任务 8: 静默 catch 修复** — 6 个组件（task-card、review-list、reward-manager、add-child-form、subscription-plans、battle-pass-client）的 catch 块添加错误 state 和显示。
+
+**任务 9: Error Boundary** — 创建全局 `src/app/error.tsx` 和 `src/app/loading.tsx`。
+
+**任务 10: Stripe webhook 安全** — 去掉 `whsec_placeholder` 占位符，无配置时返回 500。
+
+**任务 11-12: GitHub 发布准备** — `.env.example` 创建、README 重写、postinstall 脚本添加、`.gitignore` 允许 .env.example。
+
+**最终审查修复:** GoalFilters `defaultValue`→`value`、task-card 周错误字符串检查、PATCH API 家族校验+枚举验证、删除按钮错误反馈。
+
+**总结变更:** 12 commits，540+ 行变更，零类型错误，构建通过。已推送到 `https://github.com/JPlaTao/benchmarkpass`。
